@@ -64,6 +64,39 @@ def run_cmd(cmd, check=True, capture_output=False):
     result = subprocess.run(cmd, shell=True, check=check, text=True, capture_output=capture_output)
     return result.stdout.strip() if capture_output else None
 
+def get_commit_message():
+    """
+    Prompt the user to enter a custom commit message or use the default.
+    
+    Returns:
+        str: The commit message to use for the initial commit
+    """
+    print("\n📝 Commit Message Configuration")
+    print("=" * 50)
+    
+    default_message = "🚀 First commit – Init TestoJarvis Playwright Assistant"
+    print(f"Default commit message: {default_message}")
+    print("\nOptions:")
+    print("1. Press ENTER to use the default message")
+    print("2. Type a custom commit message")
+    print("-" * 50)
+    
+    # Prompt user for input
+    user_input = input("Enter your commit message (or press ENTER for default): ").strip()
+    
+    # Return custom message if provided, otherwise return default
+    if user_input:
+        # Add emoji if the custom message doesn't start with one
+        if not user_input.startswith(("🚀", "✨", "🎉", "📝", "🔧", "🐛", "💫")):
+            commit_message = f"🚀 {user_input}"
+        else:
+            commit_message = user_input
+        print(f"✅ Using custom commit message: {commit_message}")
+        return commit_message
+    else:
+        print(f"✅ Using default commit message: {default_message}")
+        return default_message
+
 def main():
     """
     Main function that orchestrates the Git repository initialization process.
@@ -72,10 +105,11 @@ def main():
     1. Changes to the script's directory
     2. Initializes Git repository if needed
     3. Stages all files
-    4. Creates initial commit
-    5. Sets up main branch
-    6. Configures remote origin
-    7. Pushes to GitHub
+    4. Gets commit message from user input
+    5. Creates initial commit with the specified message
+    6. Sets up main branch
+    7. Configures remote origin
+    8. Pushes to GitHub
     """
     print("🚀 Initialisation du dépôt Git local...")
 
@@ -92,10 +126,17 @@ def main():
     # The dot (.) represents all files and subdirectories
     run_cmd("git add .")
 
-    # Attempt to create the initial commit
+    # Get the commit message from user input
+    # This allows customization of the initial commit message
+    commit_message = get_commit_message()
+
+    # Attempt to create the initial commit with the user-specified message
     # Using try-except to handle case where no changes exist to commit
     try:
-        run_cmd('git commit -m "🚀 First commit – Init TestoJarvis Playwright Assistant"')
+        # Escape quotes in commit message to prevent shell injection
+        escaped_message = commit_message.replace('"', '\\"')
+        run_cmd(f'git commit -m "{escaped_message}"')
+        print(f"✅ Commit created successfully with message: {commit_message}")
     except subprocess.CalledProcessError:
         # If git commit fails (usually because no changes to commit), 
         # we handle it gracefully and continue
