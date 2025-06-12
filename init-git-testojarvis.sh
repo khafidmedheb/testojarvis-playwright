@@ -49,6 +49,9 @@ readonly REPO_NAME="testojarvis-playwright"  # Name of the GitHub repository
 readonly USERNAME="khafidmedheb"             # GitHub username
 readonly REMOTE_URL="git@github.com:${USERNAME}/${REPO_NAME}.git"  # SSH URL for GitHub remote
 
+# Global variable for commit message
+COMMIT_MESSAGE=""  # Will be set by get_commit_message function
+
 # Color codes for better output formatting
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -142,16 +145,59 @@ stage_files() {
 }
 
 ################################################################################
+# Function: get_commit_message
+# Description: Prompt the user to enter a custom commit message or use the default
+# Returns:
+#   Sets the global variable COMMIT_MESSAGE with the chosen message
+################################################################################
+get_commit_message() {
+    local default_message="🚀 First commit – Init TestoJarvis Playwright Assistant"
+    
+    echo
+    print_message "$BLUE" "📝 Commit Message Configuration"
+    echo "=================================================="
+    print_message "$YELLOW" "Default commit message: $default_message"
+    echo
+    echo "Options:"
+    echo "1. Press ENTER to use the default message"
+    echo "2. Type a custom commit message"
+    echo "--------------------------------------------------"
+    
+    # Prompt user for input
+    read -p "Enter your commit message (or press ENTER for default): " user_input
+    
+    # Process the input
+    if [[ -n "$user_input" ]]; then
+        # Check if custom message starts with an emoji
+        if [[ ! "$user_input" =~ ^[🚀✨🎉📝🔧🐛💫] ]]; then
+            COMMIT_MESSAGE="🚀 $user_input"
+        else
+            COMMIT_MESSAGE="$user_input"
+        fi
+        print_message "$GREEN" "✅ Using custom commit message: $COMMIT_MESSAGE"
+    else
+        COMMIT_MESSAGE="$default_message"
+        print_message "$GREEN" "✅ Using default commit message: $COMMIT_MESSAGE"
+    fi
+    
+    echo
+}
+
+################################################################################
 # Function: create_initial_commit
-# Description: Create the first commit with a descriptive message
+# Description: Create the first commit with the user-specified message
 ################################################################################
 create_initial_commit() {
     print_message "$BLUE" "Creating initial commit..."
     
-    # Attempt to create commit, but handle case where no changes exist
+    # Get the commit message from user input
+    # This allows customization of the initial commit message
+    get_commit_message
+    
+    # Attempt to create commit with the user-specified message
     # Use ignore_error to prevent script from stopping if commit fails
-    if run_cmd 'git commit -m "🚀 First commit – Init TestoJarvis Playwright Assistant"' "ignore_error"; then
-        print_message "$GREEN" "Initial commit created successfully"
+    if run_cmd "git commit -m \"$COMMIT_MESSAGE\"" "ignore_error"; then
+        print_message "$GREEN" "Initial commit created successfully with message: $COMMIT_MESSAGE"
     else
         print_message "$YELLOW" "No changes to commit, continuing..."
     fi
@@ -222,7 +268,7 @@ main() {
     check_git_installed      # Verify Git is available
     init_git_repo           # Initialize repository if needed
     stage_files             # Add all files to staging area
-    create_initial_commit   # Create first commit
+    create_initial_commit   # Get commit message from user and create first commit
     setup_main_branch       # Configure main branch
     configure_remote        # Set up GitHub remote
     push_to_github          # Push to GitHub
